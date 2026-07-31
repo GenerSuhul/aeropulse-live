@@ -10,7 +10,7 @@ import { AircraftTrackService } from './aircraft-track.service';
 import { RadarFacade } from './radar.facade';
 
 const aircraft: Aircraft = { id: 'abc123', icao24: 'ABC123', callsign: 'TEST01', registration: null, aircraftType: null, description: null, operator: null, originCountry: 'Guatemala', latitude: 16, longitude: -89, altitudeFeet: 12_000, groundSpeedKnots: 250, headingDegrees: 90, verticalRateFeetPerMinute: 0, squawk: null, category: null, isOnGround: false, emergency: null, secondsSinceLastMessage: 0, secondsSinceLastPosition: 0 };
-const config: RadarApiConfig = { apiBaseUrl: '/opensky-api', mapStyleUrl: 'style', defaultAreaId: 'world', pollIntervalMs: 60_000 };
+const config: RadarApiConfig = { apiBaseUrl: '/opensky-api', metadataApiBaseUrl: 'https://api.airplanes.live/v2', mapTileUrls: ['tiles'], defaultAreaId: 'world', pollIntervalMs: 15_000 };
 
 describe('RadarFacade', () => {
   let result$: Observable<readonly Aircraft[]>;

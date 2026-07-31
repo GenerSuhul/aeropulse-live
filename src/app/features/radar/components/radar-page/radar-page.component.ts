@@ -26,9 +26,9 @@ import { RadarToolbarComponent } from '../radar-toolbar/radar-toolbar.component'
         <section class="relative overflow-hidden rounded-card border border-border bg-white shadow-card" aria-label="Visualización del radar mundial">
           <div class="flex items-center justify-between border-b border-border px-4 py-3"><div><h2 class="font-bold">{{ facade.area().name }}</h2><p class="text-xs text-ink-secondary">{{ facade.aircraft().length.toLocaleString() }} posiciones recibidas</p></div><app-provider-status /></div>
           <app-radar-toolbar [autoRefresh]="facade.autoRefreshEnabled()" [hasSelection]="facade.selectedAircraftId() !== null" [showTrajectory]="showTrajectory()" (refresh)="facade.refreshNow()" (autoRefreshChange)="facade.setAutoRefresh($event)" (fitAll)="mapComponent().fitAllAircraft()" (centerSelected)="mapComponent().centerSelectedAircraft()" (trajectoryChange)="showTrajectory.set($event)" />
-          <app-radar-map [aircraft]="facade.aircraft()" [area]="facade.area()" [selectedId]="facade.selectedAircraftId()" [trackPoints]="facade.trackPoints()" [showTrajectory]="showTrajectory()" [mapStyleUrl]="mapStyleUrl" (aircraftSelected)="facade.selectAircraft($event)" />
+          <app-radar-map [aircraft]="facade.aircraft()" [area]="facade.area()" [selectedId]="facade.selectedAircraftId()" [trackPoints]="facade.trackPoints()" [showTrajectory]="showTrajectory()" [mapTileUrls]="mapTileUrls" (aircraftSelected)="facade.selectAircraft($event)" />
           @if (facade.loading()) { <app-loading-skeleton /> }
-          @if (!facade.loading() && facade.error(); as error) { <app-error-state [error]="error" (retry)="facade.refreshNow()" /> }
+          @if (!facade.loading() && facade.aircraft().length === 0 && facade.error(); as error) { <app-error-state [error]="error" (retry)="facade.refreshNow()" /> }
           @if (!facade.loading() && !facade.error() && facade.aircraft().length === 0) { <app-empty-state (refresh)="facade.refreshNow()" /> }
         </section>
         <app-aircraft-detail-panel [aircraft]="facade.selectedAircraft()" [missing]="facade.selectedAircraftMissing()" (center)="mapComponent().centerSelectedAircraft()" />
@@ -41,5 +41,5 @@ export class RadarPageComponent {
   readonly facade = inject(RadarFacade);
   protected readonly mapComponent = viewChild.required(RadarMapComponent);
   protected readonly showTrajectory = signal(true);
-  protected readonly mapStyleUrl = environment.radar.mapStyleUrl;
+  protected readonly mapTileUrls = environment.radar.mapTileUrls;
 }

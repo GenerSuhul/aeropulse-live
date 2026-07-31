@@ -16,7 +16,7 @@ describe('OpenSkyAircraftProvider', () => {
         OpenSkyAircraftProvider,
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: RADAR_API_CONFIG, useValue: { apiBaseUrl: '/opensky-api', mapStyleUrl: '', defaultAreaId: 'world', pollIntervalMs: 60_000 } },
+        { provide: RADAR_API_CONFIG, useValue: { apiBaseUrl: '/opensky-api', metadataApiBaseUrl: 'https://api.airplanes.live/v2', mapTileUrls: ['tiles'], defaultAreaId: 'world', pollIntervalMs: 15_000 } },
       ],
     });
     provider = TestBed.inject(OpenSkyAircraftProvider);

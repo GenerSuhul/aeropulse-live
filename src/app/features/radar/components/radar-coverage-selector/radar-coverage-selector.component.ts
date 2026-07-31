@@ -21,7 +21,7 @@ import { GeographicArea } from '../../models/geographic-area.model';
             }
           </div>
         </div>
-        <p class="flex items-center gap-2 text-xs font-semibold text-ink-secondary xl:ml-auto"><lucide-angular [img]="globeIcon" [size]="16" />Actualización real cada 60 s</p>
+        <p class="flex items-center gap-2 text-xs font-semibold text-ink-secondary xl:ml-auto"><lucide-angular [img]="globeIcon" [size]="16" />Datos cada 15 s · movimiento continuo</p>
       </div>
     </section>
   `,

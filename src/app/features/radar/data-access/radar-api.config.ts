@@ -3,7 +3,8 @@ import { environment } from '../../../../environments/environment';
 
 export interface RadarApiConfig {
   readonly apiBaseUrl: string;
-  readonly mapStyleUrl: string;
+  readonly metadataApiBaseUrl: string;
+  readonly mapTileUrls: readonly string[];
   readonly defaultAreaId: string;
   readonly pollIntervalMs: number;
 }

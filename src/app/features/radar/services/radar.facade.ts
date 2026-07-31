@@ -1,6 +1,6 @@
 import { computed, DestroyRef, inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { BehaviorSubject, catchError, combineLatest, EMPTY, merge, Observable, of, retry, Subject, switchMap, tap, timer } from 'rxjs';
+import { BehaviorSubject, catchError, combineLatest, EMPTY, merge, Observable, of, retry, Subject, switchMap, tap, throwError, timer } from 'rxjs';
 import { AircraftSelectionService } from '../../../core/aircraft-selection.service';
 import { GEOGRAPHIC_AREAS, getGeographicArea } from '../data-access/geographic-areas';
 import { RADAR_API_CONFIG } from '../data-access/radar-api.config';
@@ -100,7 +100,7 @@ export class RadarFacade {
     const isInitial = this.lastUpdatedState() === null;
     this.loadingState.set(isInitial); this.refreshingState.set(!isInitial); this.errorState.set(null);
     return this.provider.getAircraft(area).pipe(
-      retry({ count: 2, delay: (_error, retryCount) => timer(retryCount * 800) }),
+      retry({ count: 2, delay: (error: unknown, retryCount) => this.isRateLimitError(error) ? throwError(() => error) : timer(retryCount * 800) }),
       tap((aircraft) => {
         this.aircraftState.set(aircraft); this.lastUpdatedState.set(new Date());
         const selected = aircraft.find((item) => item.id === this.selectedIdState());
@@ -116,5 +116,9 @@ export class RadarFacade {
   private normalizeError(error: unknown): RadarError {
     if (typeof error === 'object' && error !== null && 'kind' in error && 'message' in error) return error as RadarError;
     return { kind: 'unknown', message: 'No se pudo actualizar el tráfico aéreo real.' };
+  }
+
+  private isRateLimitError(error: unknown): boolean {
+    return typeof error === 'object' && error !== null && 'kind' in error && error.kind === 'rate-limit';
   }
 }

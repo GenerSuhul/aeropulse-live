@@ -1,28 +1,53 @@
-import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, afterNextRender, effect, input, output, signal, viewChild } from '@angular/core';
-import type { Map as MapLibreMap, MapMouseEvent, Popup } from 'maplibre-gl';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnDestroy, afterNextRender, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import type { Map as MapLibreMap, MapMouseEvent, Popup, StyleSpecification } from 'maplibre-gl';
+import { debounceTime, distinctUntilChanged, map, of, Subject, switchMap } from 'rxjs';
+import { AircraftMetadataService } from '../../data-access/aircraft-metadata.service';
+import { AircraftMetadata } from '../../models/aircraft-metadata.model';
 import { Aircraft } from '../../models/aircraft.model';
 import { GeographicArea } from '../../models/geographic-area.model';
 import { TrackCoordinate } from '../../services/aircraft-track.service';
+
+interface MovingPosition {
+  readonly longitude: number;
+  readonly latitude: number;
+}
+
+interface NearestAircraft extends MovingPosition {
+  readonly aircraft: Aircraft;
+}
 
 @Component({
   selector: 'app-radar-map',
   host: { class: 'block min-w-0' },
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="relative h-[430px] w-full overflow-hidden bg-slate-100 md:h-[540px] xl:h-[620px]" role="region" aria-label="Mapa interactivo de aeronaves. Usa la lista de tráfico como alternativa accesible.">
-      <div #mapContainer class="absolute inset-0"></div>
-      <canvas #aircraftCanvas class="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true"></canvas>
+    <div class="relative h-[430px] w-full overflow-hidden bg-sky-50 md:h-[540px] xl:h-[620px]" role="region" aria-label="Mapa interactivo de aeronaves. Pasa el cursor sobre un avión para consultar sus datos.">
+      <div #mapContainer class="h-full w-full"></div>
+      <canvas #aircraftCanvas class="pointer-events-none absolute inset-0 z-10 h-full w-full" aria-hidden="true"></canvas>
+      <div class="pointer-events-none absolute bottom-7 left-3 z-20 rounded-full border border-white/80 bg-white/90 px-3 py-1.5 text-[11px] font-bold text-ink-secondary shadow-card backdrop-blur-sm">
+        Posiciones reales · movimiento interpolado
+      </div>
     </div>
   `,
 })
 export class RadarMapComponent implements OnDestroy {
   private readonly container = viewChild.required<ElementRef<HTMLDivElement>>('mapContainer');
   private readonly aircraftCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('aircraftCanvas');
+  private readonly metadataService = inject(AircraftMetadataService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly mapReady = signal(false);
+  private readonly hoveredAircraftSubject = new Subject<Aircraft | null>();
   private map: MapLibreMap | null = null;
-  private popup: Popup | null = null;
+  private hoverPopup: Popup | null = null;
   private popupClass: typeof Popup | null = null;
-  private overlayFrame: number | null = null;
+  private animationFrame: number | null = null;
+  private lastRenderedAt = 0;
+  private snapshotStartedAt = 0;
+  private aircraftReference: readonly Aircraft[] | null = null;
+  private hoveredAircraft: Aircraft | null = null;
+  private hoveredMetadata: AircraftMetadata | null = null;
+  private metadataLoading = false;
   private destroyed = false;
 
   readonly aircraft = input.required<readonly Aircraft[]>();
@@ -30,22 +55,38 @@ export class RadarMapComponent implements OnDestroy {
   readonly selectedId = input<string | null>(null);
   readonly trackPoints = input<readonly TrackCoordinate[]>([]);
   readonly showTrajectory = input(true);
-  readonly mapStyleUrl = input.required<string>();
+  readonly mapTileUrls = input.required<readonly string[]>();
   readonly aircraftSelected = output<string>();
 
   constructor() {
     afterNextRender(() => void this.initializeMap());
     effect(() => {
-      this.aircraft();
+      const aircraft = this.aircraft();
+      if (aircraft !== this.aircraftReference) {
+        this.aircraftReference = aircraft;
+        this.snapshotStartedAt = performance.now();
+      }
       this.selectedId();
       this.trackPoints();
       this.showTrajectory();
-      if (this.mapReady()) this.scheduleOverlayRender();
     });
     effect(() => {
       const area = this.area();
       if (!this.mapReady() || !this.map) return;
       this.showArea(area);
+    });
+    this.hoveredAircraftSubject.pipe(
+      debounceTime(180),
+      distinctUntilChanged((previous, current) => previous?.id === current?.id),
+      switchMap((aircraft) => aircraft
+        ? this.metadataService.get(aircraft.icao24).pipe(map((metadata) => ({ aircraftId: aircraft.id, metadata })))
+        : of(null)),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe((result) => {
+      if (!result || result.aircraftId !== this.hoveredAircraft?.id) return;
+      this.hoveredMetadata = result.metadata;
+      this.metadataLoading = false;
+      this.refreshHoverContent();
     });
   }
 
@@ -55,34 +96,53 @@ export class RadarMapComponent implements OnDestroy {
     this.popupClass = maplibre.Popup;
     this.map = new maplibre.Map({
       container: this.container().nativeElement,
-      style: this.mapStyleUrl(),
+      style: this.createBasemapStyle(),
       center: [0, 18],
       zoom: 1.25,
+      maxZoom: 18,
       attributionControl: {},
     });
     this.map.addControl(new maplibre.NavigationControl({ visualizePitch: true }), 'top-right');
-    this.map.on('render', () => this.scheduleOverlayRender());
-    this.map.on('resize', () => this.scheduleOverlayRender());
+    this.map.on('mousemove', (event) => this.hoverNearestAircraft(event));
     this.map.on('click', (event) => this.selectNearestAircraft(event));
+    this.map.getCanvas().addEventListener('mouseleave', () => this.clearHover());
     this.mapReady.set(true);
+    this.animationFrame = requestAnimationFrame((time) => this.animateOverlay(time));
   }
 
   ngOnDestroy(): void {
     this.destroyed = true;
-    if (this.overlayFrame !== null) cancelAnimationFrame(this.overlayFrame);
-    this.popup?.remove();
+    if (this.animationFrame !== null) cancelAnimationFrame(this.animationFrame);
+    this.hoverPopup?.remove();
     this.map?.remove();
     this.map = null;
   }
 
   centerSelectedAircraft(): void {
     const selected = this.aircraft().find((item) => item.id === this.selectedId());
-    if (selected?.longitude === null || selected?.latitude === null || selected === undefined) return;
-    this.map?.easeTo({ center: [selected.longitude, selected.latitude], zoom: Math.max(this.map.getZoom(), 9), duration: 700 });
+    if (!selected) return;
+    const position = this.movingPosition(selected, performance.now());
+    if (!position) return;
+    this.map?.easeTo({ center: [position.longitude, position.latitude], zoom: Math.max(this.map.getZoom(), 9), duration: 700 });
   }
 
   fitAllAircraft(): void {
     this.showArea(this.area());
+  }
+
+  private createBasemapStyle(): StyleSpecification {
+    return {
+      version: 8,
+      sources: {
+        'carto-voyager': {
+          type: 'raster',
+          tiles: [...this.mapTileUrls()],
+          tileSize: 256,
+          attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions" target="_blank">CARTO</a>',
+        },
+      },
+      layers: [{ id: 'carto-voyager', type: 'raster', source: 'carto-voyager', minzoom: 0, maxzoom: 20, paint: { 'raster-fade-duration': 120 } }],
+    };
   }
 
   private showArea(area: GeographicArea): void {
@@ -94,15 +154,18 @@ export class RadarMapComponent implements OnDestroy {
     this.map.easeTo({ center: [0, 18], zoom: 1.25, duration: 650 });
   }
 
-  private scheduleOverlayRender(): void {
-    if (this.overlayFrame !== null) return;
-    this.overlayFrame = requestAnimationFrame(() => {
-      this.overlayFrame = null;
-      this.renderOverlay();
-    });
+  private animateOverlay(time: number): void {
+    if (this.destroyed) return;
+    const frameInterval = this.aircraft().length > 5_000 ? 110 : 45;
+    if (time - this.lastRenderedAt >= frameInterval) {
+      this.lastRenderedAt = time;
+      this.renderOverlay(time);
+      this.updateHoverPosition(time);
+    }
+    this.animationFrame = requestAnimationFrame((nextTime) => this.animateOverlay(nextTime));
   }
 
-  private renderOverlay(): void {
+  private renderOverlay(time: number): void {
     if (!this.map) return;
     const canvas = this.aircraftCanvas().nativeElement;
     const width = canvas.clientWidth;
@@ -120,16 +183,33 @@ export class RadarMapComponent implements OnDestroy {
     context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
     context.clearRect(0, 0, width, height);
     this.drawTrack(context, width, height);
-    const detailedMarkers = this.map.getZoom() >= 2.6;
+    const detailedMarkers = this.map.getZoom() >= 4 || this.aircraft().length < 800;
     for (const aircraft of this.aircraft()) {
-      if (aircraft.longitude === null || aircraft.latitude === null) continue;
-      const point = this.map.project([aircraft.longitude, aircraft.latitude]);
+      const position = this.movingPosition(aircraft, time);
+      if (!position) continue;
+      const point = this.map.project([position.longitude, position.latitude]);
       if (point.x < -12 || point.x > width + 12 || point.y < -12 || point.y > height + 12) continue;
       const selected = aircraft.id === this.selectedId();
+      const hovered = aircraft.id === this.hoveredAircraft?.id;
       const color = selected ? '#E2A03F' : aircraft.isOnGround ? '#64748B' : '#4361EE';
-      if (detailedMarkers || selected) this.drawAircraft(context, point.x, point.y, aircraft.headingDegrees ?? 0, color, selected);
+      if (detailedMarkers || selected || hovered) this.drawAircraft(context, point.x, point.y, aircraft.headingDegrees ?? 0, color, selected || hovered);
       else this.drawPosition(context, point.x, point.y, color);
     }
+  }
+
+  private movingPosition(aircraft: Aircraft, time: number): MovingPosition | null {
+    if (aircraft.longitude === null || aircraft.latitude === null) return null;
+    if (aircraft.isOnGround || aircraft.headingDegrees === null || aircraft.groundSpeedKnots === null || aircraft.groundSpeedKnots < 1) {
+      return { longitude: aircraft.longitude, latitude: aircraft.latitude };
+    }
+    const elapsedSeconds = Math.min(Math.max((time - this.snapshotStartedAt) / 1_000, 0), 45);
+    const distanceNauticalMiles = aircraft.groundSpeedKnots * elapsedSeconds / 3_600;
+    const headingRadians = aircraft.headingDegrees * Math.PI / 180;
+    const latitude = aircraft.latitude + (distanceNauticalMiles * Math.cos(headingRadians)) / 60;
+    const longitudeScale = Math.max(Math.cos(aircraft.latitude * Math.PI / 180), 0.05);
+    const rawLongitude = aircraft.longitude + (distanceNauticalMiles * Math.sin(headingRadians)) / (60 * longitudeScale);
+    const longitude = ((rawLongitude + 540) % 360) - 180;
+    return { longitude, latitude: Math.max(-85, Math.min(85, latitude)) };
   }
 
   private drawTrack(context: CanvasRenderingContext2D, width: number, height: number): void {
@@ -160,55 +240,139 @@ export class RadarMapComponent implements OnDestroy {
     context.globalAlpha = 1;
   }
 
-  private drawAircraft(context: CanvasRenderingContext2D, x: number, y: number, heading: number, color: string, selected: boolean): void {
-    const scale = selected ? 1.2 : 1;
+  private drawAircraft(context: CanvasRenderingContext2D, x: number, y: number, heading: number, color: string, emphasized: boolean): void {
+    const scale = emphasized ? 1.2 : 1;
     context.save();
     context.translate(x, y);
-    context.rotate((heading * Math.PI) / 180);
+    context.rotate(((heading - (this.map?.getBearing() ?? 0)) * Math.PI) / 180);
     context.scale(scale, scale);
     context.beginPath();
-    context.moveTo(0, -10);
-    context.lineTo(2.2, -2.5);
-    context.lineTo(8, 2.5);
-    context.lineTo(8, 5);
-    context.lineTo(2, 3);
-    context.lineTo(2, 8);
-    context.lineTo(4.3, 10.5);
-    context.lineTo(4.3, 12);
-    context.lineTo(0, 10.5);
-    context.lineTo(-4.3, 12);
-    context.lineTo(-4.3, 10.5);
-    context.lineTo(-2, 8);
-    context.lineTo(-2, 3);
-    context.lineTo(-8, 5);
-    context.lineTo(-8, 2.5);
-    context.lineTo(-2.2, -2.5);
-    context.closePath();
+    context.moveTo(0, -10); context.lineTo(2.2, -2.5); context.lineTo(8, 2.5); context.lineTo(8, 5);
+    context.lineTo(2, 3); context.lineTo(2, 8); context.lineTo(4.3, 10.5); context.lineTo(4.3, 12);
+    context.lineTo(0, 10.5); context.lineTo(-4.3, 12); context.lineTo(-4.3, 10.5); context.lineTo(-2, 8);
+    context.lineTo(-2, 3); context.lineTo(-8, 5); context.lineTo(-8, 2.5); context.lineTo(-2.2, -2.5); context.closePath();
     context.fillStyle = color;
     context.strokeStyle = '#FFFFFF';
-    context.lineWidth = selected ? 2.2 : 1.5;
+    context.lineWidth = emphasized ? 2.2 : 1.5;
     context.fill();
     context.stroke();
     context.restore();
   }
 
+  private hoverNearestAircraft(event: MapMouseEvent): void {
+    const nearest = this.findNearestAircraft(event.point, performance.now(), 15);
+    if (!nearest) { this.clearHover(); return; }
+    this.map!.getCanvas().style.cursor = 'pointer';
+    if (nearest.aircraft.id === this.hoveredAircraft?.id) return;
+    this.hoveredAircraft = nearest.aircraft;
+    this.hoveredMetadata = null;
+    this.metadataLoading = true;
+    this.hoveredAircraftSubject.next(nearest.aircraft);
+    this.showHoverPopup(nearest);
+  }
+
   private selectNearestAircraft(event: MapMouseEvent): void {
-    if (!this.map) return;
-    let nearest: Aircraft | null = null;
-    let nearestDistance = 14 * 14;
+    const nearest = this.findNearestAircraft(event.point, performance.now(), 16);
+    if (nearest) this.aircraftSelected.emit(nearest.aircraft.id);
+  }
+
+  private findNearestAircraft(point: { readonly x: number; readonly y: number }, time: number, radius: number): NearestAircraft | null {
+    if (!this.map) return null;
+    let nearest: NearestAircraft | null = null;
+    let nearestDistance = radius * radius;
     for (const aircraft of this.aircraft()) {
-      if (aircraft.longitude === null || aircraft.latitude === null) continue;
-      const point = this.map.project([aircraft.longitude, aircraft.latitude]);
-      const distance = (point.x - event.point.x) ** 2 + (point.y - event.point.y) ** 2;
-      if (distance < nearestDistance) { nearest = aircraft; nearestDistance = distance; }
+      const position = this.movingPosition(aircraft, time);
+      if (!position) continue;
+      const projected = this.map.project([position.longitude, position.latitude]);
+      const distance = (projected.x - point.x) ** 2 + (projected.y - point.y) ** 2;
+      if (distance < nearestDistance) { nearest = { aircraft, ...position }; nearestDistance = distance; }
     }
-    if (!nearest || nearest.longitude === null || nearest.latitude === null) return;
-    this.aircraftSelected.emit(nearest.id);
-    if (!this.popupClass) return;
-    this.popup?.remove();
-    this.popup = new this.popupClass({ closeButton: false, offset: 18 })
+    return nearest;
+  }
+
+  private showHoverPopup(nearest: NearestAircraft): void {
+    if (!this.map || !this.popupClass) return;
+    this.hoverPopup?.remove();
+    this.hoverPopup = new this.popupClass({ closeButton: false, closeOnClick: false, offset: 16, maxWidth: '310px', className: 'aircraft-hover-popup' })
       .setLngLat([nearest.longitude, nearest.latitude])
-      .setText(nearest.callsign ?? nearest.registration ?? nearest.icao24.toUpperCase())
+      .setDOMContent(this.createHoverContent(nearest.aircraft))
       .addTo(this.map);
+  }
+
+  private refreshHoverContent(): void {
+    if (!this.hoveredAircraft || !this.hoverPopup) return;
+    this.hoverPopup.setDOMContent(this.createHoverContent(this.hoveredAircraft));
+  }
+
+  private createHoverContent(aircraft: Aircraft): HTMLElement {
+    const metadata = this.hoveredMetadata;
+    const content = document.createElement('div');
+    content.className = 'min-w-[250px] space-y-2 p-1 text-sm text-ink';
+    const heading = document.createElement('div');
+    heading.className = 'flex items-start justify-between gap-3';
+    const identity = document.createElement('div');
+    const title = document.createElement('p');
+    title.className = 'text-base font-extrabold leading-tight';
+    title.textContent = aircraft.callsign ?? metadata?.registration ?? aircraft.icao24.toUpperCase();
+    const identifier = document.createElement('p');
+    identifier.className = 'mt-1 text-xs font-semibold text-ink-secondary';
+    identifier.textContent = metadata?.registration ? `${metadata.registration} · ICAO ${aircraft.icao24.toUpperCase()}` : `ICAO ${aircraft.icao24.toUpperCase()}`;
+    identity.append(title, identifier);
+    const badge = document.createElement('span');
+    badge.className = aircraft.isOnGround ? 'rounded-full bg-warning-soft px-2 py-1 text-[10px] font-extrabold text-warning' : 'rounded-full bg-success-soft px-2 py-1 text-[10px] font-extrabold text-success';
+    badge.textContent = aircraft.isOnGround ? 'EN TIERRA' : 'EN VUELO';
+    heading.append(identity, badge);
+    content.append(heading);
+    content.append(this.tooltipRow('Operador', metadata?.operator ?? (this.metadataLoading ? 'Consultando registro…' : 'No publicado')));
+    const type = [metadata?.aircraftType, metadata?.description, metadata?.year].filter(Boolean).join(' · ');
+    if (type) content.append(this.tooltipRow('Aeronave', type));
+    else if (aircraft.originCountry) content.append(this.tooltipRow('Registro', aircraft.originCountry));
+    content.append(this.tooltipRow('Movimiento', this.movementLabel(aircraft)));
+    content.append(this.tooltipRow('Altitud', aircraft.altitudeFeet === null ? 'No disponible' : `${aircraft.altitudeFeet.toLocaleString()} ft`));
+    return content;
+  }
+
+  private tooltipRow(label: string, value: string): HTMLElement {
+    const row = document.createElement('div');
+    row.className = 'grid grid-cols-[76px_1fr] gap-2 border-t border-border pt-2';
+    const term = document.createElement('span');
+    term.className = 'text-xs font-bold text-ink-muted';
+    term.textContent = label;
+    const detail = document.createElement('span');
+    detail.className = 'text-xs font-bold text-ink-secondary';
+    detail.textContent = value;
+    row.append(term, detail);
+    return row;
+  }
+
+  private movementLabel(aircraft: Aircraft): string {
+    if (aircraft.isOnGround) return 'Detenida o rodando en superficie';
+    const speed = aircraft.groundSpeedKnots === null ? 'velocidad no disponible' : `${Math.round(aircraft.groundSpeedKnots)} kt`;
+    const direction = aircraft.headingDegrees === null ? 'rumbo no disponible' : `${this.cardinalDirection(aircraft.headingDegrees)} · ${Math.round(aircraft.headingDegrees)}°`;
+    const verticalRate = aircraft.verticalRateFeetPerMinute;
+    const vertical = verticalRate === null || Math.abs(verticalRate) < 120 ? 'vuelo nivelado' : verticalRate > 0 ? `ascendiendo ${Math.abs(Math.round(verticalRate)).toLocaleString()} ft/min` : `descendiendo ${Math.abs(Math.round(verticalRate)).toLocaleString()} ft/min`;
+    return `${direction} · ${speed} · ${vertical}`;
+  }
+
+  private cardinalDirection(heading: number): string {
+    const directions = ['Norte', 'Noreste', 'Este', 'Sureste', 'Sur', 'Suroeste', 'Oeste', 'Noroeste'];
+    return directions[Math.round((((heading % 360) + 360) % 360) / 45) % directions.length];
+  }
+
+  private updateHoverPosition(time: number): void {
+    if (!this.hoveredAircraft || !this.hoverPopup) return;
+    const position = this.movingPosition(this.hoveredAircraft, time);
+    if (position) this.hoverPopup.setLngLat([position.longitude, position.latitude]);
+  }
+
+  private clearHover(): void {
+    if (!this.hoveredAircraft) return;
+    this.hoveredAircraft = null;
+    this.hoveredMetadata = null;
+    this.metadataLoading = false;
+    this.hoveredAircraftSubject.next(null);
+    this.hoverPopup?.remove();
+    this.hoverPopup = null;
+    if (this.map) this.map.getCanvas().style.cursor = '';
   }
 }
