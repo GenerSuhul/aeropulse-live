@@ -3,17 +3,17 @@ import { Crosshair, LucideAngularModule, Radar, Star } from 'lucide-angular';
 import { Aircraft } from '../../models/aircraft.model';
 
 @Component({
-  selector: 'app-aircraft-detail-panel', host: { class: 'block min-w-0' }, imports: [LucideAngularModule], changeDetection: ChangeDetectionStrategy.OnPush,
+  selector: 'app-aircraft-detail-panel', host: { class: 'block min-w-0 2xl:sticky 2xl:top-[86px] 2xl:self-start' }, imports: [LucideAngularModule], changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="rounded-card border border-border bg-white shadow-card" aria-labelledby="aircraft-detail-title">
       <div class="border-b border-border p-4"><p class="text-xs font-bold uppercase tracking-[.15em] text-primary">Aeronave seleccionada</p><h2 id="aircraft-detail-title" class="mt-1 text-xl font-bold">{{ aircraft()?.callsign ?? aircraft()?.registration ?? 'Sin selección' }}</h2></div>
       @if (aircraft(); as item) {
         @if (missing()) { <div class="m-4 rounded-lg bg-warning-soft p-3 text-sm font-semibold text-amber-800">Ya no se detecta en la actualización actual. Se conserva el último dato recibido.</div> }
         <dl class="grid grid-cols-2 gap-x-4 gap-y-4 p-4 text-sm">
-          @for (field of fields(item); track field.label) { <div><dt class="text-xs font-semibold text-ink-muted">{{ field.label }}</dt><dd class="mt-1 break-words font-bold text-ink">{{ field.value }}</dd></div> }
+          @for (field of fields(item); track field.label) { <div class="min-w-0"><dt class="truncate text-xs font-semibold text-ink-muted">{{ field.label }}</dt><dd class="mt-1 break-words font-bold text-ink">{{ field.value }}</dd></div> }
         </dl>
-        <div class="grid gap-2 border-t border-border p-4 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-          <button type="button" (click)="center.emit()" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-3 text-sm font-bold text-white hover:bg-primary-dark"><lucide-angular [img]="icons.Crosshair" [size]="16" />Centrar</button>
+        <div class="grid grid-cols-2 gap-2 border-t border-border p-4">
+          <button type="button" (click)="center.emit()" class="col-span-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-3 text-sm font-bold text-white hover:bg-primary-dark"><lucide-angular [img]="icons.Crosshair" [size]="16" />Centrar</button>
           <button type="button" disabled class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border px-3 text-sm font-bold text-ink-muted"><lucide-angular [img]="icons.Radar" [size]="16" />Explorador</button>
           <button type="button" disabled class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border px-3 text-sm font-bold text-ink-muted"><lucide-angular [img]="icons.Star" [size]="16" />Seguimiento</button>
         </div>

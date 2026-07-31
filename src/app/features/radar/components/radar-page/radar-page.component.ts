@@ -18,13 +18,13 @@ import { RadarToolbarComponent } from '../radar-toolbar/radar-toolbar.component'
   imports: [AircraftDetailPanelComponent, AircraftLiveListComponent, EmptyStateComponent, ErrorStateComponent, LoadingSkeletonComponent, ProviderStatusComponent, RadarCoverageSelectorComponent, RadarHeaderComponent, RadarMapComponent, RadarStatsComponent, RadarToolbarComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="mx-auto max-w-[1800px] space-y-5">
+    <div class="mx-auto max-w-[1800px] space-y-4">
       <app-radar-header [refreshing]="facade.refreshing()" [online]="facade.online() && facade.error()?.kind !== 'network'" [lastUpdated]="facade.lastUpdated()" (refresh)="facade.refreshNow()" />
       <app-radar-coverage-selector [areas]="facade.areas" [selectedArea]="facade.area()" (areaSelected)="facade.setArea($event)" />
       <app-radar-stats [metrics]="facade.metrics()" />
-      <div class="grid gap-5 xl:grid-cols-[minmax(0,3fr)_minmax(320px,1fr)]">
+      <div class="grid gap-4 2xl:grid-cols-[minmax(0,3fr)_minmax(320px,1fr)]">
         <section class="relative overflow-hidden rounded-card border border-border bg-white shadow-card" aria-label="Visualización del radar mundial">
-          <div class="flex items-center justify-between border-b border-border px-4 py-3"><div><h2 class="font-bold">{{ facade.area().name }}</h2><p class="text-xs text-ink-secondary">{{ facade.aircraft().length.toLocaleString() }} posiciones recibidas</p></div><app-provider-status /></div>
+          <div class="flex flex-col gap-2 border-b border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between"><div class="min-w-0"><h2 class="truncate font-bold">{{ facade.area().name }}</h2><p class="text-xs text-ink-secondary">{{ facade.aircraft().length.toLocaleString() }} posiciones recibidas</p></div><app-provider-status /></div>
           <app-radar-toolbar [autoRefresh]="facade.autoRefreshEnabled()" [hasSelection]="facade.selectedAircraftId() !== null" [showTrajectory]="showTrajectory()" (refresh)="facade.refreshNow()" (autoRefreshChange)="facade.setAutoRefresh($event)" (fitAll)="mapComponent().fitAllAircraft()" (centerSelected)="mapComponent().centerSelectedAircraft()" (trajectoryChange)="showTrajectory.set($event)" />
           <app-radar-map [aircraft]="facade.aircraft()" [area]="facade.area()" [selectedId]="facade.selectedAircraftId()" [trackPoints]="facade.trackPoints()" [showTrajectory]="showTrajectory()" [mapTileUrls]="mapTileUrls" (aircraftSelected)="facade.selectAircraft($event)" />
           @if (facade.loading()) { <app-loading-skeleton /> }

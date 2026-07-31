@@ -2,7 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import { Component, DestroyRef, ElementRef, HostListener, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { Bell, ChevronLeft, CircleUserRound, Compass, Menu, Plane, Radar, Search, ShieldCheck, X } from 'lucide-angular';
+import { ChevronLeft, Compass, Menu, Plane, Radar, Search, ShieldCheck, X } from 'lucide-angular';
 import { LucideAngularModule } from 'lucide-angular';
 import { filter, fromEvent, merge } from 'rxjs';
 
@@ -21,7 +21,7 @@ export class App {
   protected readonly sidebarCollapsed = signal(false);
   protected readonly mobileNavigationOpen = signal(false);
   protected readonly online = signal(typeof navigator === 'undefined' ? true : navigator.onLine);
-  protected readonly icons = { Bell, ChevronLeft, CircleUserRound, Compass, Menu, Plane, Radar, Search, ShieldCheck, X };
+  protected readonly icons = { ChevronLeft, Compass, Menu, Plane, Radar, Search, ShieldCheck, X };
 
   constructor() {
     this.router.events.pipe(

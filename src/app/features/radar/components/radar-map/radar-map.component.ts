@@ -17,17 +17,16 @@ interface NearestAircraft extends MovingPosition {
   readonly aircraft: Aircraft;
 }
 
+const MAP_COLORS = { primary: '#4361EE', primaryDark: '#3046C5', ground: '#6B7280', white: '#FFFFFF' } as const;
+
 @Component({
   selector: 'app-radar-map',
   host: { class: 'block min-w-0' },
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="relative h-[430px] w-full overflow-hidden bg-sky-50 md:h-[540px] xl:h-[620px]" role="region" aria-label="Mapa interactivo de aeronaves. Pasa el cursor sobre un avión para consultar sus datos.">
+    <div class="relative h-[430px] w-full overflow-hidden bg-sky-50 md:h-[clamp(480px,62vh,620px)]" role="region" aria-label="Mapa interactivo de aeronaves. Pasa el cursor sobre un avión para consultar sus datos.">
       <div #mapContainer class="h-full w-full"></div>
       <canvas #aircraftCanvas class="pointer-events-none absolute inset-0 z-10 h-full w-full" aria-hidden="true"></canvas>
-      <div class="pointer-events-none absolute bottom-7 left-3 z-20 rounded-full border border-white/80 bg-white/90 px-3 py-1.5 text-[11px] font-bold text-ink-secondary shadow-card backdrop-blur-sm">
-        Posiciones reales · movimiento interpolado
-      </div>
     </div>
   `,
 })
@@ -49,6 +48,7 @@ export class RadarMapComponent implements OnDestroy {
   private hoveredMetadata: AircraftMetadata | null = null;
   private metadataLoading = false;
   private destroyed = false;
+  private readonly prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   readonly aircraft = input.required<readonly Aircraft[]>();
   readonly area = input.required<GeographicArea>();
@@ -156,7 +156,7 @@ export class RadarMapComponent implements OnDestroy {
 
   private animateOverlay(time: number): void {
     if (this.destroyed) return;
-    const frameInterval = this.aircraft().length > 5_000 ? 110 : 45;
+    const frameInterval = this.prefersReducedMotion ? 500 : this.aircraft().length > 5_000 ? 110 : 45;
     if (time - this.lastRenderedAt >= frameInterval) {
       this.lastRenderedAt = time;
       this.renderOverlay(time);
@@ -191,7 +191,7 @@ export class RadarMapComponent implements OnDestroy {
       if (point.x < -12 || point.x > width + 12 || point.y < -12 || point.y > height + 12) continue;
       const selected = aircraft.id === this.selectedId();
       const hovered = aircraft.id === this.hoveredAircraft?.id;
-      const color = selected ? '#E2A03F' : aircraft.isOnGround ? '#64748B' : '#4361EE';
+      const color = selected || hovered ? MAP_COLORS.primaryDark : aircraft.isOnGround ? MAP_COLORS.ground : MAP_COLORS.primary;
       if (detailedMarkers || selected || hovered) this.drawAircraft(context, point.x, point.y, aircraft.headingDegrees ?? 0, color, selected || hovered);
       else this.drawPosition(context, point.x, point.y, color);
     }
@@ -199,7 +199,7 @@ export class RadarMapComponent implements OnDestroy {
 
   private movingPosition(aircraft: Aircraft, time: number): MovingPosition | null {
     if (aircraft.longitude === null || aircraft.latitude === null) return null;
-    if (aircraft.isOnGround || aircraft.headingDegrees === null || aircraft.groundSpeedKnots === null || aircraft.groundSpeedKnots < 1) {
+    if (this.prefersReducedMotion || aircraft.isOnGround || aircraft.headingDegrees === null || aircraft.groundSpeedKnots === null || aircraft.groundSpeedKnots < 1) {
       return { longitude: aircraft.longitude, latitude: aircraft.latitude };
     }
     const elapsedSeconds = Math.min(Math.max((time - this.snapshotStartedAt) / 1_000, 0), 45);
@@ -223,7 +223,7 @@ export class RadarMapComponent implements OnDestroy {
       if (!started) { context.moveTo(point.x, point.y); started = true; }
       else context.lineTo(point.x, point.y);
     }
-    context.strokeStyle = '#4361EE';
+    context.strokeStyle = MAP_COLORS.primary;
     context.lineWidth = 3;
     context.globalAlpha = 0.62;
     context.setLineDash([6, 5]);
@@ -233,7 +233,7 @@ export class RadarMapComponent implements OnDestroy {
 
   private drawPosition(context: CanvasRenderingContext2D, x: number, y: number, color: string): void {
     context.beginPath();
-    context.arc(x, y, 2.1, 0, Math.PI * 2);
+    context.arc(x, y, 2.7, 0, Math.PI * 2);
     context.fillStyle = color;
     context.globalAlpha = 0.88;
     context.fill();
@@ -241,7 +241,7 @@ export class RadarMapComponent implements OnDestroy {
   }
 
   private drawAircraft(context: CanvasRenderingContext2D, x: number, y: number, heading: number, color: string, emphasized: boolean): void {
-    const scale = emphasized ? 1.2 : 1;
+    const scale = emphasized ? 1.55 : 1.3;
     context.save();
     context.translate(x, y);
     context.rotate(((heading - (this.map?.getBearing() ?? 0)) * Math.PI) / 180);
@@ -252,17 +252,17 @@ export class RadarMapComponent implements OnDestroy {
     context.lineTo(0, 10.5); context.lineTo(-4.3, 12); context.lineTo(-4.3, 10.5); context.lineTo(-2, 8);
     context.lineTo(-2, 3); context.lineTo(-8, 5); context.lineTo(-8, 2.5); context.lineTo(-2.2, -2.5); context.closePath();
     context.fillStyle = color;
-    context.strokeStyle = '#FFFFFF';
-    context.lineWidth = emphasized ? 2.2 : 1.5;
+    context.strokeStyle = MAP_COLORS.white;
+    context.lineWidth = emphasized ? 2 : 1.35;
     context.fill();
     context.stroke();
     context.restore();
   }
 
   private hoverNearestAircraft(event: MapMouseEvent): void {
-    const nearest = this.findNearestAircraft(event.point, performance.now(), 15);
+    const nearest = this.findNearestAircraft(event.point, performance.now(), 18);
     if (!nearest) { this.clearHover(); return; }
-    this.map!.getCanvas().style.cursor = 'pointer';
+    this.map!.getCanvas().classList.add('cursor-pointer');
     if (nearest.aircraft.id === this.hoveredAircraft?.id) return;
     this.hoveredAircraft = nearest.aircraft;
     this.hoveredMetadata = null;
@@ -272,7 +272,7 @@ export class RadarMapComponent implements OnDestroy {
   }
 
   private selectNearestAircraft(event: MapMouseEvent): void {
-    const nearest = this.findNearestAircraft(event.point, performance.now(), 16);
+    const nearest = this.findNearestAircraft(event.point, performance.now(), 20);
     if (nearest) this.aircraftSelected.emit(nearest.aircraft.id);
   }
 
@@ -293,7 +293,7 @@ export class RadarMapComponent implements OnDestroy {
   private showHoverPopup(nearest: NearestAircraft): void {
     if (!this.map || !this.popupClass) return;
     this.hoverPopup?.remove();
-    this.hoverPopup = new this.popupClass({ closeButton: false, closeOnClick: false, offset: 16, maxWidth: '310px', className: 'aircraft-hover-popup' })
+    this.hoverPopup = new this.popupClass({ closeButton: false, closeOnClick: false, offset: 18, maxWidth: 'min(280px, calc(100vw - 40px))', className: 'aircraft-hover-popup' })
       .setLngLat([nearest.longitude, nearest.latitude])
       .setDOMContent(this.createHoverContent(nearest.aircraft))
       .addTo(this.map);
@@ -307,7 +307,7 @@ export class RadarMapComponent implements OnDestroy {
   private createHoverContent(aircraft: Aircraft): HTMLElement {
     const metadata = this.hoveredMetadata;
     const content = document.createElement('div');
-    content.className = 'min-w-[250px] space-y-2 p-1 text-sm text-ink';
+    content.className = 'w-64 max-w-full space-y-2 p-1 text-sm text-ink';
     const heading = document.createElement('div');
     heading.className = 'flex items-start justify-between gap-3';
     const identity = document.createElement('div');
@@ -373,6 +373,6 @@ export class RadarMapComponent implements OnDestroy {
     this.hoveredAircraftSubject.next(null);
     this.hoverPopup?.remove();
     this.hoverPopup = null;
-    if (this.map) this.map.getCanvas().style.cursor = '';
+    if (this.map) this.map.getCanvas().classList.remove('cursor-pointer');
   }
 }

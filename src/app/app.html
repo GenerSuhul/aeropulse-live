@@ -55,10 +55,9 @@
         <span class="hidden items-center gap-2 rounded-full border border-border px-3 py-2 text-xs font-semibold sm:flex" [class.text-success]="online()" [class.text-danger]="!online()">
           <span class="size-2 rounded-full" [class.bg-success]="online()" [class.bg-danger]="!online()"></span>{{ online() ? 'Conectado' : 'Sin conexión' }}
         </span>
-        <button class="grid size-11 place-items-center rounded-full bg-surface-muted text-ink-secondary" aria-label="Notificaciones de demostración"><lucide-angular [img]="icons.Bell" [size]="19" /></button>
         <div class="grid size-11 place-items-center rounded-full bg-primary-soft font-bold text-primary" title="Gener Suhul">GS</div>
       </div>
     </header>
-    <main class="p-4 sm:p-6 xl:p-8"><router-outlet /></main>
+    <main class="p-4 sm:p-6 2xl:p-8"><router-outlet /></main>
   </div>
 </div>

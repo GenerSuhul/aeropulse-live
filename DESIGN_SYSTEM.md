@@ -49,6 +49,8 @@ Ejemplo: `class="text-2xl font-bold tracking-tight sm:text-3xl"` para un título
 
 Todo estado debe incluir texto o iconografía además de color.
 
+El azul primario organiza la interfaz y las tarjetas de métricas comparten el mismo tratamiento monocromático. Los colores `success`, `warning` y `danger` se reservan para comunicar estados reales; no se distribuyen entre tarjetas como decoración tipo arcoíris.
+
 ## 5. Espaciado
 
 La unidad base es 4 px. Escala autorizada: 4, 8, 12, 16, 20, 24, 32 y 40 px. Dentro de controles usar 8–12 px; dentro de tarjetas 16–24 px; entre secciones 20–32 px. Evitar medidas intermedias sin justificación.
