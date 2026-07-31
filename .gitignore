@@ -10,6 +10,11 @@
 /node_modules
 npm-debug.log
 yarn-error.log
+/.vercel
+.env
+.env.local
+.env.*.local
+!.env.example
 
 # IDEs and editors
 .idea/

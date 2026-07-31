@@ -25,3 +25,14 @@ npm run build
 ```
 
 No existe un proveedor alternativo de datos inventados: los estados de carga, vacío y error nunca fabrican aeronaves. Si una actualización falla, se conservan las últimas posiciones reales sin bloquear el mapa. La cobertura inicial, los tiles y el intervalo de actualización están centralizados en `src/environments/environment.ts`.
+
+## Despliegue en Vercel
+
+El repositorio incluye `vercel.json` y queda listo para importarse directamente desde GitHub. Vercel ejecutará `npm run vercel-build`, publicará `dist/aeropulse-live/browser`, conservará las rutas de Angular mediante el fallback SPA y desplegará `api/opensky.ts` como función serverless para reemplazar el proxy de desarrollo.
+
+1. En Vercel selecciona **Add New → Project** e importa `GenerSuhul/aeropulse-live`.
+2. Conserva el framework Angular y los comandos detectados desde `vercel.json`.
+3. Opcional pero recomendado: crea en **Settings → Environment Variables** los secretos `OPENSKY_CLIENT_ID` y `OPENSKY_CLIENT_SECRET` para ampliar la cuota oficial de OpenSky. Nunca los declares con prefijo público ni dentro de `src/environments`.
+4. Despliega. Las rutas como `/radar` cargan directamente y `/opensky-api/states/all` se resuelve del lado del servidor.
+
+Sin credenciales, la función utiliza el acceso anónimo de OpenSky y el frontend conserva el cambio automático a Airplanes.live cuando se alcanza un límite. Las respuestas exitosas del proxy se agrupan durante 10 segundos en la CDN para evitar que varios visitantes consuman solicitudes idénticas.
