@@ -5,14 +5,14 @@ import { GeographicArea } from '../../models/geographic-area.model';
 @Component({
   selector: 'app-radar-coverage-selector', host: { class: 'block min-w-0' }, imports: [LucideAngularModule], changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section id="coverage-selector" class="border-y border-border bg-white px-4 py-4 sm:rounded-card sm:border sm:px-5 sm:shadow-card" aria-labelledby="coverage-title">
-      <div class="flex flex-col gap-4">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <section id="coverage-selector" class="border-y border-border bg-white px-4 py-3 sm:rounded-card sm:border sm:px-5 sm:py-4 sm:shadow-card" aria-labelledby="coverage-title">
+      <div class="flex flex-col gap-3 sm:gap-4">
+        <div class="flex items-center justify-between gap-3">
           <div class="flex min-w-0 items-center gap-3">
-            <span class="grid size-10 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary"><lucide-angular [img]="mapIcon" [size]="20" aria-hidden="true" /></span>
-            <div class="min-w-0"><h2 id="coverage-title" class="font-bold">Cobertura del radar</h2><p class="truncate text-xs text-ink-secondary">Tráfico ADS-B de fuentes verificadas</p></div>
+            <span class="grid size-9 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary sm:size-10"><lucide-angular [img]="mapIcon" [size]="20" aria-hidden="true" /></span>
+            <div class="min-w-0"><h2 id="coverage-title" class="truncate text-sm font-bold sm:text-base">Cobertura del radar</h2><p class="hidden truncate text-xs text-ink-secondary sm:block">Tráfico ADS-B de fuentes verificadas</p></div>
           </div>
-          <p class="flex shrink-0 items-center gap-2 text-xs font-semibold text-ink-secondary"><lucide-angular [img]="globeIcon" [size]="16" aria-hidden="true" />Datos cada 15 s</p>
+          <p class="flex shrink-0 items-center gap-1.5 text-[11px] font-semibold text-ink-secondary sm:gap-2 sm:text-xs"><lucide-angular [img]="globeIcon" [size]="15" aria-hidden="true" /><span class="sm:hidden">15 s</span><span class="hidden sm:inline">Datos cada 15 s</span></p>
         </div>
         <div class="grid min-w-0 gap-2 lg:grid-cols-[minmax(240px,1fr)_auto] lg:items-center">
           <label class="sr-only" for="area-select">País, continente o mundo</label>

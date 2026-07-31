@@ -5,10 +5,10 @@ import { RadarMetrics } from '../../models/radar-metrics.model';
 @Component({
   selector: 'app-radar-stats', host: { class: 'block min-w-0' }, imports: [LucideAngularModule], changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Métricas del radar">
+    <section class="grid grid-cols-2 gap-2 sm:gap-3 xl:grid-cols-4" aria-label="Métricas del radar">
       @for (card of cards(); track card.label) {
-        <article class="min-w-0 overflow-hidden rounded-card border border-border bg-white p-4 shadow-card">
-          <div class="flex items-start justify-between gap-3"><div class="min-w-0"><p class="truncate text-xs font-semibold text-ink-secondary sm:text-sm">{{ card.label }}</p><p class="mt-2 truncate text-2xl font-bold tracking-tight sm:text-3xl">{{ card.value }}</p><p class="mt-1 truncate text-xs text-ink-muted">{{ card.note }}</p></div><span class="grid size-10 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary"><lucide-angular [img]="card.icon" [size]="21" aria-hidden="true" /></span></div>
+        <article class="min-w-0 overflow-hidden rounded-card border border-border bg-white p-3 shadow-card sm:p-4">
+          <div class="flex items-start justify-between gap-2 sm:gap-3"><div class="min-w-0"><p class="truncate text-[11px] font-semibold text-ink-secondary sm:text-sm">{{ card.label }}</p><p class="mt-1 truncate text-xl font-bold tracking-tight sm:mt-2 sm:text-3xl">{{ card.value }}</p><p class="mt-1 hidden truncate text-xs text-ink-muted sm:block">{{ card.note }}</p></div><span class="grid size-8 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary sm:size-10 sm:rounded-xl"><lucide-angular [img]="card.icon" [size]="19" aria-hidden="true" /></span></div>
         </article>
       }
     </section>

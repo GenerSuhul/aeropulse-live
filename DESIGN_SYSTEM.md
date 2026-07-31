@@ -71,7 +71,7 @@ No crear otras sombras sin actualizar primero este documento y el token central.
 - Sidebar: 272 px expandido y 80 px contraído; blanco, borde derecho y alto completo. En móvil se convierte en drawer con overlay, Escape, restauración de foco y bloqueo de scroll.
 - Topbar: 70 px, sticky, blanca con borde inferior; búsqueda visual, conectividad, notificaciones y avatar.
 - Contenido: fondo `background`, padding 16 px móvil, 24 px tableta y 32 px escritorio; ancho fluido con máximo muy amplio de 1800 px por la naturaleza del mapa.
-- Grid: 12 columnas conceptuales. En Radar el mapa ocupa aproximadamente 2/3 y el detalle 1/3 en `xl`; debajo de ese breakpoint se apilan.
+- Grid: 12 columnas conceptuales. En Radar el mapa ocupa aproximadamente 2/3 y el detalle 1/3 en `2xl`; debajo de ese breakpoint se apilan para preservar un mapa legible.
 - Breakpoints Tailwind: `sm` 640, `md` 768, `lg` 1024, `xl` 1280, `2xl` 1536 px.
 
 ## 8. Componentes
@@ -192,6 +192,8 @@ Usar exclusivamente Lucide Angular y los SVG propios documentados. Tamaños: 16 
 ## 11. Responsive
 
 - Móvil: una columna, padding 16 px, sidebar en drawer, botones de 44 px, filtros colapsables, mapa mínimo 430 px y detalle debajo.
+- En móvil las métricas usan una cuadrícula compacta 2×2, las herramientas del mapa priorizan iconos con etiquetas accesibles y la selección muestra una ficha flotante con acceso al detalle.
+- El detalle móvil aplica divulgación progresiva: estado, altitud, velocidad e identidad primero; los datos técnicos quedan disponibles bajo una expansión explícita.
 - Tableta: métricas en dos columnas, mapa completo, detalle y lista debajo.
 - Escritorio: cuatro métricas, mapa 65–72 %, detalle 28–35 %, lista inferior.
 - Textos largos deben truncarse o envolver; nunca debe aparecer scroll horizontal global.
