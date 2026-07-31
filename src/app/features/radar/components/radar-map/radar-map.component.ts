@@ -17,7 +17,12 @@ interface NearestAircraft extends MovingPosition {
   readonly aircraft: Aircraft;
 }
 
-const MAP_COLORS = { primary: '#4361EE', primaryDark: '#3046C5', ground: '#6B7280', white: '#FFFFFF' } as const;
+type AircraftMarkerState = 'normal' | 'hovered' | 'selected';
+
+const MAP_COLORS = {
+  primary: '#4361EE', primaryDark: '#3046C5', selected: '#0F172A', ground: '#6B7280',
+  selectionHalo: 'rgba(67, 97, 238, 0.20)', white: '#FFFFFF',
+} as const;
 
 @Component({
   selector: 'app-radar-map',
@@ -184,17 +189,27 @@ export class RadarMapComponent implements OnDestroy {
     context.clearRect(0, 0, width, height);
     this.drawTrack(context, width, height);
     const detailedMarkers = this.map.getZoom() >= 4 || this.aircraft().length < 800;
+    const selectedId = this.selectedId();
+    const hoveredId = this.hoveredAircraft?.id;
     for (const aircraft of this.aircraft()) {
-      const position = this.movingPosition(aircraft, time);
-      if (!position) continue;
-      const point = this.map.project([position.longitude, position.latitude]);
-      if (point.x < -12 || point.x > width + 12 || point.y < -12 || point.y > height + 12) continue;
-      const selected = aircraft.id === this.selectedId();
-      const hovered = aircraft.id === this.hoveredAircraft?.id;
-      const color = selected || hovered ? MAP_COLORS.primaryDark : aircraft.isOnGround ? MAP_COLORS.ground : MAP_COLORS.primary;
-      if (detailedMarkers || selected || hovered) this.drawAircraft(context, point.x, point.y, aircraft.headingDegrees ?? 0, color, selected || hovered);
-      else this.drawPosition(context, point.x, point.y, color);
+      if (aircraft.id === selectedId || aircraft.id === hoveredId) continue;
+      this.drawAircraftMarker(context, aircraft, time, width, height, detailedMarkers, 'normal');
     }
+    const hovered = hoveredId === selectedId ? null : this.aircraft().find((aircraft) => aircraft.id === hoveredId);
+    const selected = this.aircraft().find((aircraft) => aircraft.id === selectedId);
+    if (hovered) this.drawAircraftMarker(context, hovered, time, width, height, true, 'hovered');
+    if (selected) this.drawAircraftMarker(context, selected, time, width, height, true, 'selected');
+  }
+
+  private drawAircraftMarker(context: CanvasRenderingContext2D, aircraft: Aircraft, time: number, width: number, height: number, detailed: boolean, state: AircraftMarkerState): void {
+    if (!this.map) return;
+    const position = this.movingPosition(aircraft, time);
+    if (!position) return;
+    const point = this.map.project([position.longitude, position.latitude]);
+    if (point.x < -32 || point.x > width + 32 || point.y < -32 || point.y > height + 32) return;
+    const color = state === 'selected' ? MAP_COLORS.selected : state === 'hovered' ? MAP_COLORS.primaryDark : aircraft.isOnGround ? MAP_COLORS.ground : MAP_COLORS.primary;
+    if (detailed) this.drawAircraft(context, point.x, point.y, aircraft.headingDegrees ?? 0, color, state);
+    else this.drawPosition(context, point.x, point.y, color);
   }
 
   private movingPosition(aircraft: Aircraft, time: number): MovingPosition | null {
@@ -240,8 +255,19 @@ export class RadarMapComponent implements OnDestroy {
     context.globalAlpha = 1;
   }
 
-  private drawAircraft(context: CanvasRenderingContext2D, x: number, y: number, heading: number, color: string, emphasized: boolean): void {
-    const scale = emphasized ? 1.55 : 1.3;
+  private drawAircraft(context: CanvasRenderingContext2D, x: number, y: number, heading: number, color: string, state: AircraftMarkerState): void {
+    const scale = state === 'selected' ? 1.95 : state === 'hovered' ? 1.55 : 1.3;
+    if (state === 'selected') {
+      context.save();
+      context.beginPath();
+      context.arc(x, y, 22, 0, Math.PI * 2);
+      context.fillStyle = MAP_COLORS.selectionHalo;
+      context.strokeStyle = MAP_COLORS.primary;
+      context.lineWidth = 2.5;
+      context.fill();
+      context.stroke();
+      context.restore();
+    }
     context.save();
     context.translate(x, y);
     context.rotate(((heading - (this.map?.getBearing() ?? 0)) * Math.PI) / 180);
@@ -253,14 +279,14 @@ export class RadarMapComponent implements OnDestroy {
     context.lineTo(-2, 3); context.lineTo(-8, 5); context.lineTo(-8, 2.5); context.lineTo(-2.2, -2.5); context.closePath();
     context.fillStyle = color;
     context.strokeStyle = MAP_COLORS.white;
-    context.lineWidth = emphasized ? 2 : 1.35;
+    context.lineWidth = state === 'selected' ? 2.2 : state === 'hovered' ? 2 : 1.35;
     context.fill();
     context.stroke();
     context.restore();
   }
 
   private hoverNearestAircraft(event: MapMouseEvent): void {
-    const nearest = this.findNearestAircraft(event.point, performance.now(), 18);
+    const nearest = this.findNearestAircraft(event.point, performance.now(), 22);
     if (!nearest) { this.clearHover(); return; }
     this.map!.getCanvas().classList.add('cursor-pointer');
     if (nearest.aircraft.id === this.hoveredAircraft?.id) return;
@@ -272,7 +298,7 @@ export class RadarMapComponent implements OnDestroy {
   }
 
   private selectNearestAircraft(event: MapMouseEvent): void {
-    const nearest = this.findNearestAircraft(event.point, performance.now(), 20);
+    const nearest = this.findNearestAircraft(event.point, performance.now(), 24);
     if (nearest) this.aircraftSelected.emit(nearest.aircraft.id);
   }
 
