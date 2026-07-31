@@ -1,0 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap');
+@config "../tailwind.config.js";
+@import "tailwindcss";
+@import "maplibre-gl/dist/maplibre-gl.css";
+
+:root {
+  color-scheme: light;
+  font-family: 'Nunito', Inter, ui-sans-serif, system-ui, sans-serif;
+  background: #F5F7FA;
+  color: #0E1726;
+}
+
+html { scroll-behavior: smooth; }
+body { margin: 0; min-width: 320px; min-height: 100vh; background: #F5F7FA; }
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+*:focus-visible { outline: 3px solid rgba(67, 97, 238, .28); outline-offset: 2px; }
+.maplibregl-ctrl-attrib { font-family: inherit; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
