@@ -19,9 +19,9 @@ export class RadarStatsComponent {
   protected readonly cards = computed(() => {
     const value = this.metrics();
     return [
-      { label: 'Aeronaves detectadas', value: value.totalAircraft.toLocaleString(), note: 'Dentro del radio', icon: Activity, iconClass: 'bg-primary-soft text-primary' },
-      { label: 'En vuelo', value: value.airborneAircraft.toLocaleString(), note: 'Posiciones activas', icon: Navigation, iconClass: 'bg-success-soft text-success' },
-      { label: 'En tierra', value: value.onGroundAircraft.toLocaleString(), note: 'Altitud ground', icon: PlaneLanding, iconClass: 'bg-warning-soft text-warning' },
+      { label: 'Aeronaves detectadas', value: value.totalAircraft.toLocaleString(), note: 'En la cobertura elegida', icon: Activity, iconClass: 'bg-primary-soft text-primary' },
+      { label: 'En vuelo', value: value.airborneAircraft.toLocaleString(), note: 'Posiciones reales activas', icon: Navigation, iconClass: 'bg-success-soft text-success' },
+      { label: 'En tierra', value: value.onGroundAircraft.toLocaleString(), note: 'Confirmadas por OpenSky', icon: PlaneLanding, iconClass: 'bg-warning-soft text-warning' },
       { label: 'Altitud promedio', value: value.averageAltitude === null ? '—' : `${value.averageAltitude.toLocaleString()} ft`, note: value.averageSpeed === null ? 'Velocidad no disponible' : `${value.averageSpeed.toLocaleString()} kt promedio`, icon: Gauge, iconClass: 'bg-purple-50 text-secondary' },
     ];
   });

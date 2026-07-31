@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Aircraft } from '../models/aircraft.model';
 import { AircraftTrackService } from './aircraft-track.service';
 
-const aircraft = (id: string, longitude: number, latitude: number): Aircraft => ({ id, icao24: id, callsign: null, registration: null, aircraftType: null, description: null, operator: null, latitude, longitude, altitudeFeet: null, groundSpeedKnots: null, headingDegrees: null, verticalRateFeetPerMinute: null, squawk: null, category: null, isOnGround: false, emergency: null, secondsSinceLastMessage: null, secondsSinceLastPosition: null });
+const aircraft = (id: string, longitude: number, latitude: number): Aircraft => ({ id, icao24: id, callsign: null, registration: null, aircraftType: null, description: null, operator: null, originCountry: null, latitude, longitude, altitudeFeet: null, groundSpeedKnots: null, headingDegrees: null, verticalRateFeetPerMinute: null, squawk: null, category: null, isOnGround: false, emergency: null, secondsSinceLastMessage: null, secondsSinceLastPosition: null });
 
 describe('AircraftTrackService', () => {
   it('evita duplicados y limpia la trayectoria al cambiar selección', () => {

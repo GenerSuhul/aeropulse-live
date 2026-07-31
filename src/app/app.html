@@ -2,25 +2,25 @@
   <aside class="sticky top-0 hidden h-screen shrink-0 border-r border-border bg-white transition-[width] duration-200 lg:flex lg:flex-col"
     [class.w-68]="!sidebarCollapsed()" [class.w-20]="sidebarCollapsed()">
     <div class="flex h-[70px] items-center gap-3 border-b border-border px-5">
-      <span class="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-white shadow-sm">
-        <lucide-angular [img]="icons.Plane" [size]="22" aria-hidden="true" />
+      <span class="grid size-10 shrink-0 place-items-center text-primary">
+        <lucide-angular [img]="icons.Plane" [size]="28" [strokeWidth]="2.2" aria-hidden="true" />
       </span>
       @if (!sidebarCollapsed()) {
         <span class="min-w-0"><strong class="block truncate text-lg font-bold tracking-tight">AeroPulse</strong><small class="block text-[10px] font-bold uppercase tracking-[.2em] text-primary">Live</small></span>
       }
     </div>
     <nav class="flex-1 space-y-2 p-3" aria-label="Navegación principal">
-      <a routerLink="/radar" routerLinkActive="bg-primary-soft text-primary" class="group flex min-h-12 items-center gap-3 rounded-lg px-3 font-semibold text-ink-secondary hover:bg-surface-muted hover:text-ink" [attr.title]="sidebarCollapsed() ? 'Radar Live' : null">
+      <a routerLink="/radar" routerLinkActive="bg-slate-100 text-primary" class="group flex min-h-12 items-center gap-3 rounded-lg px-3 font-semibold text-ink-secondary hover:bg-slate-100 hover:text-ink" [attr.title]="sidebarCollapsed() ? 'Radar Live' : null">
         <lucide-angular [img]="icons.Radar" [size]="20" aria-hidden="true" />
         @if (!sidebarCollapsed()) { <span>Radar Live</span> }
       </a>
       <button disabled class="flex min-h-12 w-full items-center gap-3 rounded-lg px-3 text-left font-semibold text-ink-muted" [attr.title]="sidebarCollapsed() ? 'Explorador (próximamente)' : null">
         <lucide-angular [img]="icons.Compass" [size]="20" aria-hidden="true" />
-        @if (!sidebarCollapsed()) { <span>Explorador</span><span class="ml-auto rounded-full bg-surface-muted px-2 py-1 text-[10px]">Próximamente</span> }
+        @if (!sidebarCollapsed()) { <span>Explorador</span> }
       </button>
       <button disabled class="flex min-h-12 w-full items-center gap-3 rounded-lg px-3 text-left font-semibold text-ink-muted" [attr.title]="sidebarCollapsed() ? 'Operaciones (próximamente)' : null">
         <lucide-angular [img]="icons.ShieldCheck" [size]="20" aria-hidden="true" />
-        @if (!sidebarCollapsed()) { <span>Operaciones</span><span class="ml-auto rounded-full bg-surface-muted px-2 py-1 text-[10px]">Próximamente</span> }
+        @if (!sidebarCollapsed()) { <span>Operaciones</span> }
       </button>
     </nav>
     <button type="button" (click)="toggleDesktopSidebar()" class="m-3 grid min-h-11 place-items-center rounded-lg border border-border text-ink-secondary hover:bg-surface-muted" [attr.aria-label]="sidebarCollapsed() ? 'Expandir navegación' : 'Contraer navegación'">

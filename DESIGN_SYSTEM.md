@@ -34,7 +34,7 @@ Ejemplo: `class="text-2xl font-bold tracking-tight sm:text-3xl"` para un título
 | `secondary` | `#805DCA` | Acento secundario puntual | Reemplazar al primario |
 | `success` | `#00AB55` | En vivo, correcto, en vuelo | Decoración sin significado |
 | `success-soft` | `#E7F8F0` | Fondo de badge de éxito | Texto principal |
-| `warning` | `#E2A03F` | Mock, precaución, selección del mapa | Grandes fondos |
+| `warning` | `#E2A03F` | Precaución y selección del mapa | Grandes fondos |
 | `warning-soft` | `#FFF6E5` | Fondo de aviso | Botón primario |
 | `danger` | `#E7515A` | Error, offline, acción destructiva | Estado neutro |
 | `danger-soft` | `#FDEDEF` | Fondo de error | Texto sin contraste |
@@ -67,7 +67,7 @@ No crear otras sombras sin actualizar primero este documento y el token central.
 ## 7. Layout
 
 - Sidebar: 272 px expandido y 80 px contraído; blanco, borde derecho y alto completo. En móvil se convierte en drawer con overlay, Escape, restauración de foco y bloqueo de scroll.
-- Topbar: 70 px, sticky, blanca con borde inferior; búsqueda visual, conectividad, notificaciones demo y avatar.
+- Topbar: 70 px, sticky, blanca con borde inferior; búsqueda visual, conectividad, notificaciones y avatar.
 - Contenido: fondo `background`, padding 16 px móvil, 24 px tableta y 32 px escritorio; ancho fluido con máximo muy amplio de 1800 px por la naturaleza del mapa.
 - Grid: 12 columnas conceptuales. En Radar el mapa ocupa aproximadamente 2/3 y el detalle 1/3 en `xl`; debajo de ese breakpoint se apilan.
 - Breakpoints Tailwind: `sm` 640, `md` 768, `lg` 1024, `xl` 1280, `2xl` 1536 px.
@@ -124,7 +124,7 @@ No crear otras sombras sin actualizar primero este documento y el token central.
 ### Badge
 
 - Anatomía: punto/icono opcional y etiqueta breve.
-- Variantes: success, warning, danger, info, mock y neutral.
+- Variantes: success, warning, danger, info y neutral.
 - Clases base: `inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold`.
 - No comunicar un estado únicamente con color.
 
@@ -183,10 +183,9 @@ Usar exclusivamente Lucide Angular y los SVG propios documentados. Tamaños: 16 
 - `refreshing`: datos previos visibles, indicador discreto y acción temporalmente deshabilitada.
 - `success`: badge “En vivo” y hora de actualización.
 - `warning`: dato degradado o selección desaparecida; conserva contexto.
-- `error`: mensaje tipado, reintento y alternativa mock.
+- `error`: mensaje tipado, reintento y cambio de cobertura.
 - `offline`: badge “Sin conexión” y últimos datos conservados.
-- `mock`: badge “Datos simulados” y fuente claramente indicada.
-- `empty`: explicación y acciones para radio, ubicación o actualización.
+- `empty`: explicación y acciones para cambiar la cobertura o actualizar.
 
 ## 11. Responsive
 
@@ -217,7 +216,7 @@ Usar exclusivamente Lucide Angular y los SVG propios documentados. Tamaños: 16 
 - [ ] La navegación funciona con teclado y Escape cierra overlays.
 - [ ] El contenido cumple contraste AA y no depende solo del color.
 - [ ] Móvil no tiene scroll horizontal y los controles miden al menos 44 px.
-- [ ] Loading, refreshing, empty, error, offline y mock están tratados.
+- [ ] Loading, refreshing, empty, error y offline están tratados.
 - [ ] Ningún dato ausente muestra `null`, `undefined` o `NaN`.
 - [ ] Los componentes compartidos no dependen de un dominio específico.
 - [ ] Se ejecutaron pruebas, lint y build de producción antes de integrar.

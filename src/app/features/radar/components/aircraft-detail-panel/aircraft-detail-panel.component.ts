@@ -32,6 +32,7 @@ export class AircraftDetailPanelComponent {
     return [
       { label: 'ICAO', value: item.icao24 }, { label: 'Matrícula', value: text(item.registration) },
       { label: 'Tipo', value: text(item.aircraftType) }, { label: 'Operador', value: text(item.operator) },
+      { label: 'País de origen', value: text(item.originCountry) },
       { label: 'Estado', value: item.isOnGround ? 'En tierra' : 'En vuelo' }, { label: 'Altitud', value: number(item.altitudeFeet, 'ft') },
       { label: 'Velocidad', value: number(item.groundSpeedKnots, 'kt') }, { label: 'Rumbo', value: number(item.headingDegrees, '°') },
       { label: 'Vel. vertical', value: number(item.verticalRateFeetPerMinute, 'ft/min') }, { label: 'Squawk', value: text(item.squawk) },

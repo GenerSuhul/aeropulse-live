@@ -1,10 +1,10 @@
 {
-  "/adsb-api": {
-    "target": "https://api.adsb.lol",
+  "/opensky-api": {
+    "target": "https://opensky-network.org/api",
     "secure": true,
     "changeOrigin": true,
     "pathRewrite": {
-      "^/adsb-api": ""
+      "^/opensky-api": ""
     }
   }
 }

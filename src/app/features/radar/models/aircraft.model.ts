@@ -6,6 +6,7 @@ export interface Aircraft {
   readonly aircraftType: string | null;
   readonly description: string | null;
   readonly operator: string | null;
+  readonly originCountry: string | null;
   readonly latitude: number | null;
   readonly longitude: number | null;
   readonly altitudeFeet: number | null;
