@@ -21,7 +21,7 @@ export class RadarStatsComponent {
     return [
       { label: 'Aeronaves detectadas', value: value.totalAircraft.toLocaleString(), note: 'En la cobertura elegida', icon: Activity },
       { label: 'En vuelo', value: value.airborneAircraft.toLocaleString(), note: 'Posiciones activas', icon: Navigation },
-      { label: 'En tierra', value: value.onGroundAircraft.toLocaleString(), note: 'Confirmadas por OpenSky', icon: PlaneLanding },
+      { label: 'En tierra', value: value.onGroundAircraft.toLocaleString(), note: 'Confirmadas por ADS-B', icon: PlaneLanding },
       { label: 'Altitud promedio', value: value.averageAltitude === null ? '—' : `${value.averageAltitude.toLocaleString()} ft`, note: value.averageSpeed === null ? 'Velocidad no disponible' : `${value.averageSpeed.toLocaleString()} kt promedio`, icon: Gauge },
     ];
   });

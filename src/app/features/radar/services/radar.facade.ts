@@ -34,6 +34,7 @@ export class RadarFacade {
   private readonly onlineState = signal(typeof navigator === 'undefined' ? true : navigator.onLine);
 
   readonly areas = GEOGRAPHIC_AREAS;
+  readonly dataSource = this.provider.source;
   readonly area = this.areaState.asReadonly();
   readonly aircraft = this.aircraftState.asReadonly();
   readonly selectedAircraftId = this.selectedIdState.asReadonly();

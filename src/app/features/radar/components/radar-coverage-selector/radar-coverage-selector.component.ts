@@ -10,7 +10,7 @@ import { GeographicArea } from '../../models/geographic-area.model';
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div class="flex min-w-0 items-center gap-3">
             <span class="grid size-10 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary"><lucide-angular [img]="mapIcon" [size]="20" aria-hidden="true" /></span>
-            <div class="min-w-0"><h2 id="coverage-title" class="font-bold">Cobertura del radar</h2><p class="truncate text-xs text-ink-secondary">Tráfico real de OpenSky Network</p></div>
+            <div class="min-w-0"><h2 id="coverage-title" class="font-bold">Cobertura del radar</h2><p class="truncate text-xs text-ink-secondary">Tráfico ADS-B de fuentes verificadas</p></div>
           </div>
           <p class="flex shrink-0 items-center gap-2 text-xs font-semibold text-ink-secondary"><lucide-angular [img]="globeIcon" [size]="16" aria-hidden="true" />Datos cada 15 s</p>
         </div>

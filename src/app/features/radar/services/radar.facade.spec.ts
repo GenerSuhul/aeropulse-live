@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Observable, of, throwError } from 'rxjs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -18,7 +19,7 @@ describe('RadarFacade', () => {
 
   function createFacade(): RadarFacade {
     result$ = of([aircraft]);
-    const provider = { getAircraft: (): Observable<readonly Aircraft[]> => result$ };
+    const provider = { source: signal('OpenSky Network · datos reales'), getAircraft: (): Observable<readonly Aircraft[]> => result$ };
     TestBed.configureTestingModule({ providers: [RadarFacade, AircraftTrackService, AircraftSelectionService, { provide: RADAR_API_CONFIG, useValue: config }, { provide: AIRCRAFT_DATA_PROVIDER, useValue: provider }] });
     return TestBed.inject(RadarFacade);
   }
