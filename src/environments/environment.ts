@@ -12,4 +12,9 @@ export const environment = {
     defaultAreaId: 'world',
     pollIntervalMs: 15_000,
   },
+  explorer: {
+    adsbdbApiBaseUrl: 'https://api.adsbdb.com/v0',
+    cacheTtlMs: 15 * 60_000,
+    timeoutMs: 8_000,
+  },
 } as const;

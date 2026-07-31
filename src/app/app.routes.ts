@@ -6,5 +6,9 @@ export const routes: Routes = [
     path: 'radar',
     loadChildren: () => import('./features/radar/radar.routes').then((module) => module.RADAR_ROUTES),
   },
+  {
+    path: 'explorador',
+    loadChildren: () => import('./features/explorer/explorer.routes').then((module) => module.EXPLORER_ROUTES),
+  },
   { path: '**', redirectTo: 'radar' },
 ];

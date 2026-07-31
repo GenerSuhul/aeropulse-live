@@ -14,10 +14,10 @@
         <lucide-angular [img]="icons.Radar" [size]="20" aria-hidden="true" />
         @if (!sidebarCollapsed()) { <span>Radar Live</span> }
       </a>
-      <button disabled class="flex min-h-12 w-full items-center gap-3 rounded-lg px-3 text-left font-semibold text-ink-muted" [attr.title]="sidebarCollapsed() ? 'Explorador (próximamente)' : null">
+      <a routerLink="/explorador" routerLinkActive="bg-primary-soft text-primary" class="group flex min-h-12 items-center gap-3 rounded-lg px-3 font-semibold text-ink-secondary hover:bg-slate-100 hover:text-ink" [attr.title]="sidebarCollapsed() ? 'Explorador de vuelos' : null">
         <lucide-angular [img]="icons.Compass" [size]="20" aria-hidden="true" />
         @if (!sidebarCollapsed()) { <span>Explorador</span> }
-      </button>
+      </a>
       <button disabled class="flex min-h-12 w-full items-center gap-3 rounded-lg px-3 text-left font-semibold text-ink-muted" [attr.title]="sidebarCollapsed() ? 'Operaciones (próximamente)' : null">
         <lucide-angular [img]="icons.ShieldCheck" [size]="20" aria-hidden="true" />
         @if (!sidebarCollapsed()) { <span>Operaciones</span> }
@@ -38,7 +38,7 @@
         </div>
         <nav class="space-y-2 p-4" aria-label="Navegación móvil">
           <a routerLink="/radar" class="flex min-h-12 items-center gap-3 rounded-lg bg-primary-soft px-3 font-semibold text-primary"><lucide-angular [img]="icons.Radar" [size]="20" />Radar Live</a>
-          <span class="flex min-h-12 items-center gap-3 px-3 text-ink-muted"><lucide-angular [img]="icons.Compass" [size]="20" />Explorador</span>
+          <a routerLink="/explorador" class="flex min-h-12 items-center gap-3 rounded-lg px-3 font-semibold text-ink-secondary"><lucide-angular [img]="icons.Compass" [size]="20" />Explorador</a>
           <span class="flex min-h-12 items-center gap-3 px-3 text-ink-muted"><lucide-angular [img]="icons.ShieldCheck" [size]="20" />Operaciones</span>
         </nav>
       </aside>

@@ -1,0 +1,6 @@
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { CircleAlert, LucideAngularModule, RefreshCw } from 'lucide-angular';
+import { ExplorerError } from '../../models/explorer-error.model';
+
+@Component({ selector: 'app-explorer-error-state', imports: [LucideAngularModule], changeDetection: ChangeDetectionStrategy.OnPush, template: `<div class="rounded-card border border-red-200 bg-danger-soft p-4 shadow-card" role="alert"><div class="flex items-start gap-3"><lucide-angular [img]="alertIcon" [size]="20" class="mt-0.5 shrink-0 text-danger"/><div class="min-w-0 flex-1"><p class="font-bold text-danger">No se pudo completar la consulta</p><p class="mt-1 text-sm text-red-800">{{ error().message }}</p><div class="mt-3 flex flex-wrap gap-2"><button type="button" (click)="retry.emit()" class="inline-flex min-h-11 items-center gap-2 rounded-lg bg-danger px-3 text-sm font-bold text-white"><lucide-angular [img]="refreshIcon" [size]="16"/>Reintentar</button></div></div></div></div>` })
+export class ExplorerErrorStateComponent { readonly error = input.required<ExplorerError>(); readonly retry = output<void>(); protected readonly alertIcon = CircleAlert; protected readonly refreshIcon = RefreshCw; }
