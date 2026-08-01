@@ -10,5 +10,9 @@ export const routes: Routes = [
     path: 'explorador',
     loadChildren: () => import('./features/explorer/explorer.routes').then((module) => module.EXPLORER_ROUTES),
   },
+  {
+    path: 'operaciones',
+    loadChildren: () => import('./features/operations/operations.routes').then((module) => module.OPERATIONS_ROUTES),
+  },
   { path: '**', redirectTo: 'radar' },
 ];
